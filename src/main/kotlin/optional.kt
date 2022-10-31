@@ -3,7 +3,7 @@ import org.hamcrest.Matcher
 import org.hamcrest.TypeSafeDiagnosingMatcher
 import java.util.*
 
-private class OptionalIsPresent<T>(val matcher: Matcher<T>? = null) : TypeSafeDiagnosingMatcher<Optional<T>>() {
+internal class OptionalIsPresent<T>(val matcher: Matcher<T>? = null) : TypeSafeDiagnosingMatcher<Optional<T>>() {
 
     override fun describeTo(description: Description?) {
         if (matcher == null) {
@@ -35,13 +35,3 @@ private class OptionalIsPresent<T>(val matcher: Matcher<T>? = null) : TypeSafeDi
 
     }
 }
-
-/**
- * Ensure the optional has a value
- */
-fun <T> optionalIsPresent(): Matcher<Optional<T>> = OptionalIsPresent()
-
-/**
- * Ensure the optional has a value and that value matches something
- */
-fun <T> optionalMatches(matcher: Matcher<T>): Matcher<Optional<T>> = OptionalIsPresent(matcher)

@@ -1,7 +1,8 @@
-import Meetcha.optionalIsPresent
-import Meetcha.optionalMatches
+import collection.BetterListContains
+import collection.mappingMatcher
 import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers.*
+import org.hamcrest.MatcherAssert.*
 import org.hamcrest.StringDescription
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.ParameterizedTest
@@ -11,39 +12,38 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 import java.util.*
 import java.util.stream.Stream
 
-
-class OptionalTest {
+class Collection {
     class PresentArgs : ArgumentsProvider {
         override fun provideArguments(context: ExtensionContext?): Stream<out Arguments> =
             listOf<ExpectedMatch<*>>(
-                ExpectedMatch(
-                    optionalIsPresent(),
-                    Optional.of("yep"),
-                    true
-                ),
-                ExpectedMatch(
-                    optionalMatches(equalTo("yep")),
-                    Optional.of("yep"),
-                    true
-                ),
 
-                ExpectedMatch(
-                    optionalIsPresent(),
-                    Optional.empty<Int>(),
-                    false, "expected value"
-                ),
-                ExpectedMatch(
-                    not(optionalIsPresent()),
-                    Optional.empty<Int>(),
-                    true
-                ),
+
+                run {
+                    val good = listOf(1, 2, 3, 4)
+                    ExpectedMatch(
+                        BetterListContains(good.map { equalTo(it) }),
+                        good,
+                        true
+                    )
+                },
+
+                run {
+                    val diffSize = listOf(1, 2, 3, 4)
+                    ExpectedMatch(
+                        BetterListContains(diffSize.map { equalTo(it) }.subList(0, 3)),
+                        diffSize,
+                        false,
+                        "expected size 3 but got 4"
+                    )
+                }
+
             ).stream()
 
     }
 
     @ParameterizedTest
     @ArgumentsSource(PresentArgs::class)
-    fun isPresent(test: ExpectedMatch<Optional<String>>) {
+    fun simple(test: ExpectedMatch<Optional<String>>) {
         MatcherAssert.assertThat(test.matcher.matches(test.fixture), equalTo(test.expected))
 
         if (!test.expected) {

@@ -5,7 +5,7 @@ import org.hamcrest.Matcher
 import org.hamcrest.StringDescription
 import org.hamcrest.TypeSafeDiagnosingMatcher
 
-private class Mapping<ORIGINAL, MAPPED>(
+internal class Mapping<ORIGINAL, MAPPED>(
     val transform: (ORIGINAL) -> MAPPED,
     val matcher: Matcher<Iterable<MAPPED>>
 ) : TypeSafeDiagnosingMatcher<Iterable<ORIGINAL>>() {
