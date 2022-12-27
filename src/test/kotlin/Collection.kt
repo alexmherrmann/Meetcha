@@ -1,60 +1,74 @@
-import collection.BetterListContains
-import collection.mappingMatcher
-import org.hamcrest.MatcherAssert
-import org.hamcrest.Matchers.*
-import org.hamcrest.MatcherAssert.*
-import org.hamcrest.StringDescription
-import org.junit.jupiter.api.extension.ExtensionContext
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.Arguments
-import org.junit.jupiter.params.provider.ArgumentsProvider
-import org.junit.jupiter.params.provider.ArgumentsSource
-import java.util.*
-import java.util.stream.Stream
+import com.alexmherrmann.Meetcha.Meetcha
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 
 class Collection {
-    class PresentArgs : ArgumentsProvider {
-        override fun provideArguments(context: ExtensionContext?): Stream<out Arguments> =
-            listOf<ExpectedMatch<*>>(
 
+	@Nested
+	inner class OnlyNot_InOrder {
+		@Test
+		fun doesMatch() = MatcherTester.matches(
+			listOf(1, 2, 3, 4),
+			Meetcha.betterContainsOnly(listOf(1, 2, 3, 4).eqs),
+		)
 
-                run {
-                    val good = listOf(1, 2, 3, 4)
-                    ExpectedMatch(
-                        BetterListContains(good.map { equalTo(it) }),
-                        good,
-                        true
-                    )
-                },
+		@Test
+		fun doesntMatchMoreSmaller() = MatcherTester.doesntMatch(
+			listOf(1, 2, 3),
+			Meetcha.betterContainsOnly(listOf(1, 2, 3, 4).eqs),
+			"expected size 4 but got 3"
+		)
 
-                run {
-                    val diffSize = listOf(1, 2, 3, 4)
-                    ExpectedMatch(
-                        BetterListContains(diffSize.map { equalTo(it) }.subList(0, 3)),
-                        diffSize,
-                        false,
-                        "expected size 3 but got 4"
-                    )
-                }
+		@Test
+		fun doesntMatchMoreBigger() = MatcherTester.doesntMatch(
+			listOf(1, 2, 3, 4, 5),
+			Meetcha.betterContainsOnly(listOf(1, 2, 3, 4).eqs),
+			"expected size 4 but got 5"
+		)
+	}
 
-            ).stream()
+	@Nested
+	inner class NotOnly_InOrder {
+		@Test
+		fun doesMatch() = MatcherTester.matches(
+			listOf(1, 2, 3),
+			Meetcha.betterContainsInOrder(listOf(1, 2, 3).eqs)
+		)
 
-    }
+		@Test
+		fun outOfOrder() = MatcherTester.doesntMatch(
+			listOf(1,2,3),
+			Meetcha.betterContainsInOrder(listOf(1,3,2).eqs),
+			"matcher (2: <2>) is out of order at (1: 2); it was found after matcher (1: <3>) matched (2: 3)"
+		)
+	}
 
-    @ParameterizedTest
-    @ArgumentsSource(PresentArgs::class)
-    fun simple(test: ExpectedMatch<Optional<String>>) {
-        MatcherAssert.assertThat(test.matcher.matches(test.fixture), equalTo(test.expected))
+	@Nested
+	inner class NotOnly_NotInOrder {
+		@Test
+		fun doesMatch() = MatcherTester.matches(
+			listOf(1, 2, 3, 4),
+			Meetcha.betterContains(listOf(1, 2, 3, 4).eqs),
+		)
 
-        if (!test.expected) {
-            // Do we expect a description?
-            if (test.expectedDescription != null) {
-                val description = StringDescription()
-                test.matcher.describeMismatch(test.fixture, description)
+		@Test
+		fun doesMatchSubset() {
+			MatcherTester.matches(
+				listOf(1, 2, 3, 4, 5),
+				Meetcha.betterContains(listOf(1, 2, 3).eqs)
+			)
 
-                MatcherAssert.assertThat(description.toString(), test.expectedDescription)
-            }
-        }
+			MatcherTester.matches(
+				listOf(1, 3, 4, 5, 2),
+				Meetcha.betterContains(listOf(2, 1, 3).eqs)
+			)
+		}
 
-    }
+		@Test
+		fun doesntMatchMissing() = MatcherTester.doesntMatch(
+			listOf(1, 2, 3),
+			Meetcha.betterContains(listOf(1, 2, 3, 4).eqs),
+			"matcher 4 couldn't find a match: ${4.eq.description} in: [1,2,3]"
+		)
+	}
 }
